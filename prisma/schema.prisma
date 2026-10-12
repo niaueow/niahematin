@@ -1,0 +1,109 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model UserConfig {
+  id                    Int      @id @default(1)
+  telegramUserId        String?  @unique
+  mode                  String   @default("CALIBRATION")
+  timezone              String   @default("Asia/Jakarta")
+  quietStart            String   @default("22:00")
+  quietEnd              String   @default("06:30")
+  turboHp               Boolean  @default(true)
+  needsBudget           Int      @default(1000000)
+  groceriesTarget       Int      @default(300000)
+  bibitBudget           Int      @default(100000)
+  hpBudget              Int      @default(400000)
+  tagihanBudget         Int      @default(100000)
+  transportBudget       Int      @default(150000)
+  funBudget             Int      @default(100000)
+  otherNeedsBudget      Int      @default(50000)
+  bufferBudget          Int      @default(100000)
+  smallBuyCountPerWeek  Int      @default(3)
+  smallBuyAmountPerWeek Int      @default(60000)
+  hpGoalTier1           Int      @default(3000000)
+  hpSaved               Int      @default(0)
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+}
+
+model MonthPlan {
+  id                      Int      @id @default(autoincrement())
+  monthKey                String   @unique
+  allowance               Int
+  mode                    String
+  needsBudget             Int
+  groceriesTarget         Int
+  bibitBudget             Int
+  hpBudget                Int
+  tagihanBudget           Int
+  transportBudget         Int
+  funBudget               Int
+  otherNeedsBudget        Int
+  bufferBudget            Int
+  smallBuyCountPerWeek    Int      @default(3)
+  smallBuyAmountPerWeek   Int      @default(60000)
+  transferredSavings      Boolean  @default(false)
+  priorMonthSweepDone     Boolean  @default(false)
+  proactiveWarningsSentOn String?
+  createdAt               DateTime @default(now())
+  updatedAt               DateTime @updatedAt
+
+  transactions Transaction[]
+}
+
+model Transaction {
+  id              Int             @id @default(autoincrement())
+  monthPlanId     Int
+  telegramUpdateId String?
+  type            String
+  category        String?
+  pot             String?
+  amount          Int
+  note            String
+  occurredAt      DateTime
+  effectiveDayKey String
+  isSmallBuy      Boolean         @default(false)
+  isOverspendNeeds Boolean        @default(false)
+  metadataJson    String?
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  monthPlan MonthPlan @relation(fields: [monthPlanId], references: [id], onDelete: Cascade)
+
+  @@index([monthPlanId, occurredAt])
+  @@index([telegramUpdateId])
+}
+
+model PendingAsk {
+  id          Int      @id @default(autoincrement())
+  kind        String
+  payloadJson String
+  status      String   @default("OPEN")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model ScheduledJobRun {
+  id        Int      @id @default(autoincrement())
+  jobKey    String
+  dayKey    String
+  ranAt     DateTime @default(now())
+
+  @@unique([jobKey, dayKey])
+}
+
+model RecurringBill {
+  id        Int      @id @default(autoincrement())
+  name      String
+  amount    Int
+  dayOfMonth Int
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
