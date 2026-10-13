@@ -71,6 +71,8 @@ export type DailyLimitResult = {
   survivalFloor: number;
   isDanger: boolean;
   daysRemaining: number;
+  todayMakanSpent?: number;
+  todayLimitLeft?: number;
 };
 
 export type WeekSmallBuySnapshot = {

@@ -2,7 +2,7 @@ import type { Prisma } from "@prisma/client";
 import { prisma } from "../db.js";
 import { dayOfMonth, daysInMonth, effectiveDayKey, weekKey } from "../core/calendar.js";
 import { calculateDailyLimit, evaluateBoleh, projectedTomorrowLimit } from "../core/budget.js";
-import type { SpendingSnapshot } from "../core/types.js";
+import type { DailyLimitResult, SpendingSnapshot } from "../core/types.js";
 import type { Category, Pot } from "../core/types.js";
 import { createOrGetCurrentPlan } from "./planService.js";
 
@@ -157,12 +157,52 @@ export async function getSnapshot(plan: MonthPlan): Promise<SpendingSnapshot> {
 export async function currentDailyStatus(date = new Date()) {
   const plan = await createOrGetCurrentPlan(date);
   const snapshot = await getSnapshot(plan);
-  const daily = calculateDailyLimit({
+
+  const todayKey = effectiveDayKey(date);
+  const todayTxs = await prisma.transaction.findMany({
+    where: {
+      monthPlanId: plan.id,
+      effectiveDayKey: todayKey,
+      type: "EXPENSE"
+    }
+  });
+
+  const todayMakanSpent = todayTxs
+    .filter((t) => t.category === "MAKAN" || t.category === "JAJAN")
+    .reduce((s, t) => s + t.amount, 0);
+
+  const todayGroceriesSpent = todayTxs
+    .filter((t) => t.category === "GROCERIES")
+    .reduce((s, t) => s + t.amount, 0);
+
+  const snapshotBeforeToday = {
+    makanSpent: Math.max(0, snapshot.makanSpent - todayMakanSpent),
+    groceriesSpent: Math.max(0, snapshot.groceriesSpent - todayGroceriesSpent)
+  };
+
+  const dailyStart = calculateDailyLimit({
+    plan,
+    snapshot: snapshotBeforeToday,
+    dayOfMonth: dayOfMonth(date),
+    daysInMonth: daysInMonth(date)
+  });
+
+  const currentDaily = calculateDailyLimit({
     plan,
     snapshot,
     dayOfMonth: dayOfMonth(date),
     daysInMonth: daysInMonth(date)
   });
+
+  const todayLimitLeft = dailyStart.dailyLimit - todayMakanSpent;
+
+  const daily: DailyLimitResult = {
+    ...currentDaily,
+    dailyLimit: dailyStart.dailyLimit,
+    todayMakanSpent,
+    todayLimitLeft
+  };
+
   return { plan, snapshot, daily };
 }
 

@@ -10,14 +10,16 @@ Test Environment: Mocked Telegram API, fake clock (`Asia/Jakarta`), isolated tem
 
 Phase 1 of **#niahematin** (Telegram personal finance bot for students) has completed all three QA stages defined in `docs/qa.md`. The initial audit identified 12 distinct issues across data integrity, API security, input parsing, budget enforcement, and command completeness. In Stage 2, an 86-test automated suite confirmed 16 test failures across these 12 bugs. In Stage 3, all 12 bugs were resolved, and 19 regression tests were added in `tests/regression_stage3.test.ts`.
 
-As of the final test execution, **105 out of 105 tests pass (100% pass rate)** across 7 test suites with 0 test failures and 0 flakiness. No git commits were made, preserving the clean working tree for owner review.
+As of the final test execution, **106 out of 106 tests pass (100% pass rate)** across 7 test suites with 0 test failures and 0 flakiness. No git commits were made, preserving the clean working tree for owner review.
 
 **Bug Counts by Severity:**
 - **Critical:** 2 found, 2 fixed (BUG-001, BUG-002)
 - **High:** 6 found, 6 fixed (BUG-003, BUG-004, BUG-005, BUG-006, BUG-007, BUG-008)
 - **Medium:** 3 found, 3 fixed (BUG-009, BUG-010, BUG-011)
 - **Low:** 1 found, 1 verified/addressed (BUG-012)
-- **Bonus Fix:** Fixed regex word-boundary substring false-positive in `inferCategory`.
+- **Bonus Fixes:**
+  1. Fixed regex word-boundary substring false-positive in `inferCategory`.
+  2. Fixed "Sisa limit hari ini" to subtract today's spending and removed spurious per-expense HP delay nag in `formatExpenseReply`.
 
 **Top 3 Risks Identified and Mitigated:**
 1. **Financial Ledger Corruption via Update Duplication (Mitigated):** Telegram webhook retries previously double-wrote transactions. Resolved via `telegramUpdateId` deduplication in `transactionService.ts`.
@@ -66,23 +68,23 @@ As of the final test execution, **105 out of 105 tests pass (100% pass rate)** a
 |---|---:|---:|---:|---:|---|
 | **Stage 1 (Audit)** | - | - | - | - | 12 bugs catalogued |
 | **Stage 2 (Initial Test Suite)** | 86 | 70 | 16 | 1 | FAILED (16 failures across 12 bugs) |
-| **Stage 3 (Regression & Full Suite)** | 105 | 105 | 0 | 0 | **PASSED (100% pass rate)** |
+| **Stage 3 (Regression & Full Suite)** | 106 | 106 | 0 | 0 | **PASSED (100% pass rate)** |
 
 ### Per-Suite Final Breakdown (`npm test` Output Evidence)
 
 ```
  RUN  v2.1.9 C:/Users/ASUS/OneDrive/Documents/Projects/niahematin-qa
 
- ✓ tests/budget.test.ts (4 tests) 21ms
- ✓ tests/regression.test.ts (4 tests) 170ms
- ✓ tests/negative.test.ts (10 tests) 285ms
- ✓ tests/edge_cases.test.ts (17 tests) 397ms
- ✓ tests/functional.test.ts (34 tests) 1015ms
- ✓ tests/security_integrity.test.ts (17 tests) 1013ms
- ✓ tests/regression_stage3.test.ts (19 tests) 1231ms
+ ✓ tests/budget.test.ts (4 tests) 19ms
+ ✓ tests/regression.test.ts (4 tests) 180ms
+ ✓ tests/negative.test.ts (10 tests) 337ms
+ ✓ tests/edge_cases.test.ts (17 tests) 525ms
+ ✓ tests/functional.test.ts (34 tests) 1169ms
+ ✓ tests/security_integrity.test.ts (17 tests) 1279ms
+ ✓ tests/regression_stage3.test.ts (20 tests) 1575ms
 
  Test Files  7 passed (7)
-      Tests  105 passed (105)
+      Tests  106 passed (106)
    Start at  15:11:42
    Duration  4.08s
 ```

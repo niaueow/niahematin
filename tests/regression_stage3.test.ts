@@ -314,4 +314,33 @@ describe("Stage 3 Regression Tests", () => {
     expect(jobs.length).toBeGreaterThanOrEqual(3);
     for (const j of jobs) j.stop();
   });
+
+  // ────────────────────────────────────────────────────────────────────────────
+  // Daily Remaining Limit & Anti-Nag: Sisa limit hari ini deducts today's spending
+  // ────────────────────────────────────────────────────────────────────────────
+  it("BUG-DAILY-REMAINING: Logging expenses correctly decreases today's remaining limit without spurious HP delay nag", async () => {
+    // 1. Send "warteg 16k"
+    await harness.sendText("warteg 16k");
+    const reply1 = harness.lastReply();
+    expect(reply1).toBeDefined();
+    expect(reply1).toContain("16.000");
+    expect(reply1).toContain("warteg");
+    expect(reply1).toContain("Makan");
+    expect(reply1).not.toContain("HP mundur");
+    expect(reply1).toContain("Sisa limit hari ini");
+
+    // 2. Send "warteg 20k"
+    await harness.sendText("warteg 20k");
+    const reply2 = harness.lastReply();
+    expect(reply2).toBeDefined();
+    expect(reply2).toContain("20.000");
+    expect(reply2).not.toContain("HP mundur");
+
+    // 3. Send "warteg cepek"
+    await harness.sendText("warteg cepek");
+    const reply3 = harness.lastReply();
+    expect(reply3).toBeDefined();
+    expect(reply3).toContain("100.000");
+    expect(reply3).not.toContain("HP mundur");
+  });
 });

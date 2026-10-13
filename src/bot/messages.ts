@@ -10,11 +10,19 @@ export function formatExpenseReply(input: {
   note: string;
   category: string;
   daily: DailyLimitResult;
-  hpBudget: number;
+  hpBudget?: number;
+  todayLimitLeft?: number;
 }): string {
-  const delay = hpDays(input.amount, input.hpBudget);
-  const hpLine = delay > 0 ? ` Bulan ini HP mundur sekitar ${delay} hari kalau pola ini kejadian terus.` : "";
-  return `OK, ${rupiah(input.amount)} ${input.note} (${input.category}). Sisa limit hari ini ${rupiah(input.daily.dailyLimit)}.${hpLine}`;
+  const sisa = input.todayLimitLeft !== undefined ? input.todayLimitLeft : (input.daily.todayLimitLeft ?? input.daily.dailyLimit);
+  let sisaStr = "";
+  if (sisa > 0) {
+    sisaStr = rupiah(sisa);
+  } else if (sisa < 0) {
+    sisaStr = `Rp 0 (lewat ${rupiah(Math.abs(sisa))})`;
+  } else {
+    sisaStr = "Rp 0";
+  }
+  return `OK, ${rupiah(input.amount)} ${input.note} (${input.category}). Sisa limit hari ini ${sisaStr}.`;
 }
 
 export function formatBoleh(result: BolehResult, amount: number, note: string): string {
