@@ -40,6 +40,15 @@ export async function addExpense(input: {
   date?: Date;
 }): Promise<Transaction> {
   const date = input.date ?? new Date();
+
+  // BUG-001 fix: idempotency — return existing row if update_id already logged
+  if (input.telegramUpdateId) {
+    const existing = await prisma.transaction.findFirst({
+      where: { telegramUpdateId: input.telegramUpdateId }
+    });
+    if (existing) return existing;
+  }
+
   const plan = await createOrGetCurrentPlan(date);
   return prisma.transaction.create({
     data: {
@@ -179,9 +188,13 @@ export async function evaluatePurchase(input: { amount: number; category: Catego
     newMakanSpend: input.category === "MAKAN" || input.category === "JAJAN" ? input.amount : 0
   });
 
+  // BUG-008 fix: pass isEssential so Danger Mode enforces red for non-essentials
+  const isEssential = input.category === "MAKAN" || input.category === "GROCERIES";
+
   return evaluateBoleh({
     amount: input.amount,
     isSmallBuy: isSmallBuy(input.category, input.amount),
+    isEssential,
     daily,
     tomorrowLimit: tomorrow,
     weekSmallBuy: {

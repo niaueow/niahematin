@@ -29,6 +29,11 @@ export const quickLogSchema = z.object({
 
 export type QuickLog = z.infer<typeof quickLogSchema>;
 
+/**
+ * Parse a single quick-log message.
+ * Returns null (never throws) on invalid input so the bot handler can
+ * reply helpfully instead of crashing. (BUG-004 fix)
+ */
 export function parseQuickLog(rawText: string): QuickLog | null {
   const text = rawText.trim().toLowerCase();
   if (!text || text.startsWith("/")) return null;
@@ -44,12 +49,37 @@ export function parseQuickLog(rawText: string): QuickLog | null {
   if (!note) return null;
 
   const { category, confidence } = inferCategory(note);
-  return quickLogSchema.parse({
+
+  // BUG-004 fix: use safeParse so ZodError is never thrown to caller
+  const result = quickLogSchema.safeParse({
     amount: parsed.amount,
     note,
     category,
     confidence
   });
+
+  return result.success ? result.data : null;
+}
+
+/**
+ * Detect whether a message looks like it contains multiple expense items.
+ * Returns true when two or more distinct amount tokens are found.
+ * (BUG-003 fix: callers can ask for clarification instead of silently dropping)
+ */
+export function hasMultipleItems(rawText: string): boolean {
+  const text = rawText.trim().toLowerCase();
+  if (!text || text.startsWith("/")) return false;
+
+  // Count slang hits
+  let slangCount = 0;
+  for (const word of slangAmounts.keys()) {
+    if (new RegExp(`\\b${word}\\b`, "i").test(text)) slangCount++;
+  }
+  if (slangCount > 1) return true;
+
+  // Count numeric amount tokens (e.g. "15k", "20", "1jt")
+  const numericMatches = text.match(/\d+(?:[.,]\d+)?(?:\s?(?:rb|ribu|k|jt|juta))?/gi) ?? [];
+  return numericMatches.length > 1;
 }
 
 function parseAmount(text: string): { amount: number; raw: string } | null {
@@ -80,7 +110,10 @@ function parseAmount(text: string): { amount: number; raw: string } | null {
 
 function inferCategory(note: string): { category: Category; confidence: number } {
   for (const rule of categoryKeywords) {
-    if (rule.words.some((word) => note.includes(word))) {
+    const matched = rule.words.some((word) =>
+      new RegExp(`\\b${word}\\b`, "i").test(note)
+    );
+    if (matched) {
       return { category: rule.category, confidence: 0.9 };
     }
   }

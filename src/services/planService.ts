@@ -78,16 +78,23 @@ export async function confirmAllowance(amount: number, note: string, date = new 
     create: planData
   });
 
-  await prisma.transaction.create({
-    data: {
-      monthPlanId: plan.id,
-      type: "INCOME",
-      amount,
-      note,
-      occurredAt: date,
-      effectiveDayKey: key
-    }
+  // BUG-006 fix: only create income record if none exists for this month plan
+  const existingIncome = await prisma.transaction.findFirst({
+    where: { monthPlanId: plan.id, type: "INCOME" }
   });
+
+  if (!existingIncome) {
+    await prisma.transaction.create({
+      data: {
+        monthPlanId: plan.id,
+        type: "INCOME",
+        amount,
+        note,
+        occurredAt: date,
+        effectiveDayKey: key
+      }
+    });
+  }
 
   return plan;
 }

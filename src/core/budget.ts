@@ -45,6 +45,8 @@ export function projectedTomorrowLimit(input: DailyLimitInput & { newMakanSpend:
 export function evaluateBoleh(input: {
   amount: number;
   isSmallBuy: boolean;
+  /** True for MAKAN and GROCERIES. Non-essential buys in Danger Mode are forced red. */
+  isEssential?: boolean;
   daily: DailyLimitResult;
   tomorrowLimit: number;
   weekSmallBuy: WeekSmallBuySnapshot;
@@ -54,6 +56,12 @@ export function evaluateBoleh(input: {
   const smallBuyAmountLeft = Math.max(0, input.plan.smallBuyAmountPerWeek - input.weekSmallBuy.amount);
   const reasons: string[] = [];
   let verdict: BolehResult["verdict"] = "AMAN";
+
+  // BUG-008 fix: Danger Mode freezes non-essential (Fun/Jajan) spending
+  if (input.daily.isDanger && !input.isEssential) {
+    verdict = "MELEWATI_LIMIT";
+    reasons.push("Danger Mode aktif: tahan Fun dulu sampai limit pulih");
+  }
 
   if (input.amount > input.daily.dailyLimit) {
     verdict = "MELEWATI_LIMIT";
