@@ -5,6 +5,7 @@ dist/
 .env.test
 QA_REPORT.md
 QAauditbycodex.txt
+*.db
 *.db-journal
 coverage/
 prisma/dev.db
