@@ -19,6 +19,23 @@ export function createServer() {
     res.json({ ok: true, service: "niahematin", phase: 1 });
   });
 
+  // BUG-002 fix: require Bearer token on every route except /health
+  app.use((req, res, next) => {
+    const apiSecret = process.env.API_SECRET;
+    if (!apiSecret) {
+      // If no secret configured, deny all protected routes as a safe default
+      res.status(401).json({ error: "API_SECRET not configured" });
+      return;
+    }
+    const auth = req.headers.authorization ?? "";
+    const token = auth.startsWith("Bearer ") ? auth.slice(7) : "";
+    if (token !== apiSecret) {
+      res.status(401).json({ error: "Unauthorized" });
+      return;
+    }
+    next();
+  });
+
   app.get("/summary", async (_req, res, next) => {
     try {
       const status = await currentDailyStatus();
