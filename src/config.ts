@@ -3,7 +3,7 @@ import { z } from "zod";
 
 const envSchema = z.object({
   NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
-  PORT: z.coerce.number().int().positive().default(3000),
+  PORT: z.coerce.number().int().positive().default(3001),
   DATABASE_URL: z.string().default("file:./dev.db"),
   TELEGRAM_BOT_TOKEN: z.string().optional(),
   TELEGRAM_ALLOWED_USER_ID: z.string().optional(),
