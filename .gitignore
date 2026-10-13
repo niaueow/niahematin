@@ -2,6 +2,9 @@ node_modules/
 dist/
 .env
 .env.example
+.env.test
+QA_REPORT.md
+QAauditbycodex.txt
 *.db
 *.db-journal
 coverage/
