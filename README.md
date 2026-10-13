@@ -30,7 +30,7 @@ If the token is empty, the API still starts.
 
 ## Bot Commands
 
-- `/masuk 2000000 jatah`
+- `/masuk 1000 jatah`
 - quick log: `15 kopi`, `25rb nasgor`, `goceng parkir`
 - `/boleh 25000 boba`
 - `/sisa`

@@ -5,7 +5,7 @@ const slangAmounts = new Map<string, number>([
   ["goceng", 5_000],
   ["ceban", 10_000],
   ["seceng", 1_000],
-  ["goban", 50_000],
+  ["gocap", 50_000],
   ["cepek", 100_000],
   ["gopek", 500_000]
 ]);
